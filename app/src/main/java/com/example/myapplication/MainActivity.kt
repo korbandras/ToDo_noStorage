@@ -1,5 +1,7 @@
 package com.example.myapplication
 
+import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
@@ -7,7 +9,7 @@ import androidx.activity.ComponentActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
-class MainActivity : ComponentActivity() {
+class MainActivity(private val context: Context) : ComponentActivity() {
 
     private lateinit var todoAdaptor: ToDo_Adaptor
     private lateinit var rvToDo: RecyclerView
@@ -18,7 +20,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        todoAdaptor = ToDo_Adaptor(mutableListOf())
+
+        //todoAdaptor = ToDo_Adaptor(mutableListOf())
+
+        val savedTodoList = loadToDoList()
+        todoAdaptor = ToDo_Adaptor(savedTodoList, this)
+
+        //todoAdaptor = loadToDoList()
 
         rvToDo = findViewById(R.id.rvToDo)
         btnToDoAdd = findViewById(R.id.btnToDoAdd)
@@ -40,6 +48,23 @@ class MainActivity : ComponentActivity() {
         btnToDoDelete.setOnClickListener{
             todoAdaptor.deleteDone()
         }
-        //anyad
+    }
+
+    private val sharedPreferences: SharedPreferences = context.getSharedPreferences("todo_prefs", Context.MODE_PRIVATE)
+    private val todoListKey = "todo_list"
+
+    private fun loadToDoList(): MutableList<ToDo> {
+        val jsonList = sharedPreferences.getString(todoListKey, null)
+        return if (jsonList != null) {
+            val todoList = mutableListOf<ToDo>()
+            val todoStrings = jsonList.split(",")
+            for (todoString in todoStrings) {
+                val todo = ToDo(todoString)
+                todoList.add(todo)
+            }
+            todoList
+        } else {
+            mutableListOf()
+        }
     }
 }
